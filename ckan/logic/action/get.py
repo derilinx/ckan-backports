@@ -2921,13 +2921,14 @@ def am_following_group(context, data_dict):
         context['model'].UserFollowingGroup)
 
 
-def _followee_count(context, data_dict, FollowerClass):
+def _followee_count(context, data_dict, FollowerClass, is_org=False):
     if not context.get('skip_validation'):
         schema = context.get('schema',
                              ckan.logic.schema.default_follow_user_schema())
         data_dict, errors = _validate(data_dict, schema, context)
         if errors:
             raise ValidationError(errors)
+
     return FollowerClass.followee_count(data_dict['id'])
 
 
@@ -2954,8 +2955,11 @@ def followee_count(context, data_dict):
 
     followee_datasets = _followee_count(context, data_dict,
                                         model.UserFollowingDataset)
-    followee_groups = _followee_count(context, data_dict,
-                                      model.UserFollowingGroup)
+    followee_groups = (
+        len(_group_or_org_followee_list(context, data_dict, is_org=False)) +
+        len(_group_or_org_followee_list(context, data_dict, is_org=True))
+    )
+
 
     return sum((followee_users, followee_datasets, followee_groups))
 
@@ -3000,9 +3004,23 @@ def group_followee_count(context, data_dict):
 
     '''
     _check_access('group_followee_count', context, data_dict)
-    return _followee_count(
-        context, data_dict,
-        context['model'].UserFollowingGroup)
+
+    return len(_group_or_org_followee_list(context, data_dict, is_org=False))
+
+
+def organization_followee_count(
+        context, data_dict):
+    '''Return the number of organizations that are followed by the given user.
+
+    :param id: the id of the user
+    :type id: string
+
+    :rtype: int
+
+    '''
+    _check_access('organization_followee_count', context, data_dict)
+
+    return len(_group_or_org_followee_list(context, data_dict, is_org=True))
 
 
 @logic.validate(logic.schema.default_follow_user_schema)

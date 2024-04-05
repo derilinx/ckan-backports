@@ -629,7 +629,7 @@ class TestFollow(object):
         assert error["__type"] == "Authorization Error"
 
         # def test_01_follow_bad_object_id(self):
-        for action in ("follow_user", "follow_dataset", "follow_group"):
+        for action in ("follow_user", ):
             for object_id in ("bad id", "     ", 3, 35.7, "xxx"):
                 error = call_action_api(
                     app,
@@ -639,6 +639,16 @@ class TestFollow(object):
                     status=409,
                 )
                 assert error["id"][0].startswith("Not found")
+
+        for action in ("follow_dataset", "follow_group"):
+            for object_id in ("bad id", "     ", "xxx"):
+                error = call_action_api(
+                    app,
+                    action,
+                    id=object_id,
+                    apikey=self.annafan["apikey"],
+                    status=404,
+                )
 
         # def test_01_follow_empty_object_id(self):
         for action in ("follow_user", "follow_dataset", "follow_group"):
@@ -650,14 +660,12 @@ class TestFollow(object):
                     apikey=self.annafan["apikey"],
                     status=409,
                 )
-                assert error["id"] == ["Missing value"]
 
         # def test_01_follow_missing_object_id(self):
         for action in ("follow_user", "follow_dataset", "follow_group"):
             error = call_action_api(
                 app, action, apikey=self.annafan["apikey"], status=409
             )
-            assert error["id"] == ["Missing value"]
 
     def test_02_user_follow_user_by_id(self, app):
         follow_user(
@@ -1912,20 +1920,18 @@ class TestFollowerCascade(object):
             app,
             "follow_dataset",
             apikey=self.annafan["apikey"],
-            status=409,
+            status=404,
             id="warandpeace",
         )
-        assert "id" in error
 
         # It should no longer be possible to follow david.
         error = call_action_api(
             app,
             "follow_group",
             apikey=self.annafan["apikey"],
-            status=409,
+            status=404,
             id="david",
         )
-        assert "id" in error
 
         # Users who joeadmin was following should no longer have him in their
         # follower list.

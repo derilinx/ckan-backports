@@ -1,6 +1,7 @@
 # encoding: utf-8
 
 import functools
+import inspect
 import sys
 
 from collections import defaultdict, OrderedDict
@@ -18,6 +19,19 @@ from ckan.common import _, g
 import ckan.lib.maintain as maintain
 
 log = getLogger(__name__)
+
+
+def get_local_functions(module, include_private=False):
+    """Return list of (name, func) tuples.
+
+    Filters out all non-callables and all the items that were
+    imported.
+    """
+    return inspect.getmembers(
+        module,
+        lambda func: (inspect.isfunction(func) and
+                      inspect.getmodule(func) is module and
+                      (include_private or not func.__name__.startswith('_'))))
 
 
 class AuthFunctions:
@@ -114,12 +128,12 @@ class AuthFunctions:
                 else:
                     # fallback to chaining off the builtin auth function
                     prev_func = self._functions[name]
-                
+
                 new_func = (functools.partial(func, prev_func))
                 # persisting attributes to the new partial function
                 for attribute, value in six.iteritems(func.__dict__):
                     setattr(new_func, attribute, value)
-                
+
                 fetched_auth_functions[name] = new_func
 
         # Use the updated ones in preference to the originals.

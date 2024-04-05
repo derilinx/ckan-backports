@@ -1243,7 +1243,7 @@ def vocabulary_create(context, data_dict):
     return model_dictize.vocabulary_dictize(vocabulary, context)
 
 
-def activity_create(context, activity_dict, **kw):
+def activity_create(context, data_dict):
     '''Create a new activity stream activity.
 
     You must be a sysadmin to create new activities.
@@ -1265,14 +1265,7 @@ def activity_create(context, activity_dict, **kw):
 
     '''
 
-    _check_access('activity_create', context, activity_dict)
-
-    # this action had a ignore_auth param which has been removed
-    # removed in 2.2
-    if 'ignore_auth' in kw:
-        raise Exception('Activity Stream calling parameters have changed '
-                        'ignore_auth must be passed in the context not as '
-                        'a param')
+    _check_access('activity_create', context, data_dict)
 
     if not ckan.common.asbool(
             config.get('ckan.activity_streams_enabled', 'true')):
@@ -1280,15 +1273,15 @@ def activity_create(context, activity_dict, **kw):
 
     model = context['model']
 
-    # Any revision_id that the caller attempts to pass in the activity_dict is
+    # Any revision_id that the caller attempts to pass in the data_dict is
     # ignored and removed here.
-    if 'revision_id' in activity_dict:
-        del activity_dict['revision_id']
+    if 'revision_id' in data_dict:
+        del data_dict['revision_id']
 
     schema = context.get('schema') or \
         ckan.logic.schema.default_create_activity_schema()
 
-    data, errors = _validate(activity_dict, schema, context)
+    data, errors = _validate(data_dict, schema, context)
     if errors:
         raise ValidationError(errors)
 

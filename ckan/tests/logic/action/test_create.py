@@ -1300,10 +1300,33 @@ class TestFollowDataset(object):
             "am_following_dataset", context, id=dataset["id"]
         )
 
-        activities = helpers.call_action("user_activity_list", id=user["id"])
-        assert [activity["activity_type"] for activity in activities] == []
-        # A follow creates no Activity, since:
-        # https://github.com/ckan/ckan/pull/317
+        helpers.call_action("follow_dataset", context, id=dataset["id"])
+        assert (
+            helpers.call_action("dataset_follower_count", id=dataset["id"])
+            == 1
+        )
+        assert [
+            u["name"]
+            for u in helpers.call_action(
+                "dataset_follower_list", id=dataset["id"]
+            )
+        ] == [user["name"]]
+        assert helpers.call_action(
+            "am_following_dataset", context, id=dataset["id"]
+        )
+
+        helpers.call_action("unfollow_dataset", context, id=dataset["id"])
+        assert (
+            helpers.call_action("dataset_follower_count", id=dataset["id"])
+            == 0
+        )
+        assert (
+            helpers.call_action("dataset_follower_list", id=dataset["id"])
+            == []
+        )
+        assert not helpers.call_action(
+            "am_following_dataset", context, id=dataset["id"]
+        )
 
 
 @pytest.mark.usefixtures("clean_db", "with_request_context")

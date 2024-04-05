@@ -40,7 +40,7 @@ class TestPackage:
         assert out["notes"] == pkg.notes
         assert (
             out["notes_rendered"]
-            == '<p>A great package  like <a href="/dataset/pollution_stats">package:pollution_stats</a></p>'
+            == '<p>A <b>great</b> package  like <a href="/dataset/pollution_stats">package:pollution_stats</a></p>'
         )
 
 

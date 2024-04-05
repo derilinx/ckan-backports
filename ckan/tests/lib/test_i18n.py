@@ -44,24 +44,18 @@ class TestBuildJSTranslations(object):
     Tests for ``ckan.lib.i18n.build_js_translations``.
     """
 
-    def setup(self):
-        self.temp_dir = tempfile.mkdtemp()
-
-    def teardown(self):
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
-
-    def build_js_translations(self):
+    def build_js_translations(self, tmp_path):
         u"""
         Build JS translations in temporary directory.
         """
         old_translations_dir = i18n._JS_TRANSLATIONS_DIR
-        i18n._JS_TRANSLATIONS_DIR = self.temp_dir
+        i18n._JS_TRANSLATIONS_DIR = tmp_path
         try:
             return i18n.build_js_translations()
         finally:
             i18n._JS_TRANSLATIONS_DIR = old_translations_dir
 
-    def test_output_is_valid(self):
+    def test_output_is_valid(self, tmp_path):
         u"""
         Test that the generated JS files are valid.
         """
@@ -71,8 +65,8 @@ class TestBuildJSTranslations(object):
                 data = json.load(f)
             assert data[u""].get(u"domain", None) == u"ckan"
 
-        self.build_js_translations()
-        files = os.listdir(self.temp_dir)
+        self.build_js_translations(tmp_path)
+        files = os.listdir(tmp_path)
 
         # Check that all locales have been generated
         assert set(i18n.get_locales()).difference([u"en"]) == set(
@@ -81,48 +75,48 @@ class TestBuildJSTranslations(object):
 
         # Check that each file is valid
         for filename in files:
-            check_file(os.path.join(self.temp_dir, filename))
+            check_file(os.path.join(tmp_path, filename))
 
-    def test_regenerate_only_if_necessary(self):
+    def test_regenerate_only_if_necessary(self, tmp_path):
         u"""
         Test that translation files are only generated when necessary.
         """
-        self.build_js_translations()
+        self.build_js_translations(tmp_path)
         mtimes = {}
-        for filename in os.listdir(self.temp_dir):
-            fullname = os.path.join(self.temp_dir, filename)
+        for filename in os.listdir(tmp_path):
+            fullname = os.path.join(tmp_path, filename)
             mtimes[filename] = os.path.getmtime(fullname)
 
         # Remove an output file and back-date another one
         removed_filename, outdated_filename = sorted(mtimes.keys())[:2]
         removed_mtime = mtimes.pop(removed_filename)
         outdated_mtime = mtimes.pop(outdated_filename)
-        os.remove(os.path.join(self.temp_dir, removed_filename))
-        os.utime(os.path.join(self.temp_dir, outdated_filename), (0, 0))
+        os.remove(os.path.join(tmp_path, removed_filename))
+        os.utime(os.path.join(tmp_path, outdated_filename), (0, 0))
 
-        self.build_js_translations()
+        self.build_js_translations(tmp_path)
 
         # Make sure deleted file has been rebuild
-        assert os.path.isfile(os.path.join(self.temp_dir, removed_filename))
+        assert os.path.isfile(os.path.join(tmp_path, removed_filename))
 
         # Make sure outdated file has been rebuild
-        fullname = os.path.join(self.temp_dir, outdated_filename)
+        fullname = os.path.join(tmp_path, outdated_filename)
         assert os.path.getmtime(fullname) >= outdated_mtime
 
         # Make sure the other files have not been rebuild
-        for filename in os.listdir(self.temp_dir):
+        for filename in os.listdir(tmp_path):
             if filename in [removed_filename, outdated_filename]:
                 continue
-            fullname = os.path.join(self.temp_dir, filename)
+            fullname = os.path.join(tmp_path, filename)
             new_mtime = os.path.getmtime(fullname)
             assert new_mtime == mtimes[filename]
 
-    def test_translations_from_extensions(self):
+    def test_translations_from_extensions(self, tmp_path):
         u"""
         Test that translations from extensions are taken into account.
         """
-        self.build_js_translations()
-        filename = os.path.join(self.temp_dir, u"de.js")
+        self.build_js_translations(tmp_path)
+        filename = os.path.join(tmp_path, u"de.js")
         with codecs.open(filename, u"r", encoding=u"utf-8") as f:
             de = json.load(f)
 

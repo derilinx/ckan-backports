@@ -490,6 +490,12 @@ def group_followee_count(context, data_dict):
     return {'success': True}
 
 
+def organization_followee_count(context, data_dict):
+    '''Check if the number of organizations followed by a user are visible.
+    Visible to all by default.'''
+    return {'success': True}
+
+
 def user_followee_count(context, data_dict):
     '''Check if the number of users followed by a user are visible.
     Visible to all by default.'''

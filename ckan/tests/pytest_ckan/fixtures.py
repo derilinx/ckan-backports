@@ -43,6 +43,7 @@ import ckan.tests.factories as factories
 import ckan.plugins
 import ckan.cli
 import ckan.lib.search as search
+from ckan.lib import redis
 
 from ckan.common import config
 
@@ -153,6 +154,47 @@ def reset_index():
     return search.clear_all
 
 
+def _empty_queues():
+
+    conn = redis.connect_to_redis()
+    for queue in rq.Queue.all(connection=conn):
+        queue.empty()
+        queue.delete()
+
+
+@pytest.fixture(scope=u"session")
+def reset_queues():
+    """Callable for emptying and deleting the queues.
+
+    If possible use the ``clean_queues`` fixture instead.
+    """
+    return _empty_queues
+
+
+@pytest.fixture()
+def clean_redis(reset_redis):
+    """Remove all keys from Redis.
+
+    This fixture removes all the records from Redis::
+
+        @pytest.mark.usefixtures("clean_redis")
+        def test_redis_is_empty():
+            assert redis.keys("*") == []
+
+    If test requires presence of some initial data in redis, make sure that
+    data producer applied **after** ``clean_redis``::
+
+        @pytest.mark.usefixtures(
+            "clean_redis",
+            "fixture_that_adds_xxx_key_to_redis"
+        )
+        def test_redis_has_one_record():
+            assert redis.keys("*") == [b"xxx"]
+
+    """
+    reset_redis()
+
+
 @pytest.fixture
 def clean_db(reset_db):
     """Resets the database to the initial state.
@@ -176,6 +218,28 @@ def clean_db(reset_db):
 
 
 @pytest.fixture
+def clean_queues(reset_queues):
+    """Empties and deleted all queues.
+
+    This can be used either for all tests in a class::
+
+        @pytest.mark.usefixtures("clean_queues")
+        class TestExample(object):
+
+            def test_example(self):
+
+    or for a single test::
+
+        class TestExample(object):
+
+            @pytest.mark.usefixtures("clean_queues")
+            def test_example(self):
+
+    """
+    reset_queues()
+
+
+@pytest.fixture(scope="session")
 def migrate_db_for():
     """Apply database migration defined by plugin.
 
