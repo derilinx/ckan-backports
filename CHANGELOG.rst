@@ -10,6 +10,17 @@ Changelog
 .. towncrier release notes start
 
 ===========================
+v.2.9.14 (2025-10-30)
+===========================
+
+Bug fixes
+---------
+
+- `CVE-2025-54384 <https://github.com/ckan/ckan/security/advisories/GHSA-2r4h-8jxv-w2j8>`_: Stored
+  XSS vector in Markdown description fields.
+
+
+===========================
 v.2.9.13 (2025-02-27)
 ===========================
 
