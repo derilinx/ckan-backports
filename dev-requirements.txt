@@ -19,9 +19,9 @@ sphinx-rtd-theme==0.4.3
 alabaster==0.7.12  # Higher versions don't work with this Sphinx version
 cookiecutter==1.7.0
 
-pytest==4.6.5
+pytest==8.3.5
 pytest-split-tests==1.0.9
 pytest-cov==2.7.1
 pytest-freezegun==0.4.1
-pytest-rerunfailures==8.0
+pytest-rerunfailures==14.0
 towncrier==19.2.0

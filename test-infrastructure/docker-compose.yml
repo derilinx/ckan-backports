@@ -9,7 +9,7 @@ services:
   ckan-postgres:
     networks:
       - default
-    image: "postgres:10"
+    image: "postgres:12"
     environment:
       POSTGRES_USER: ckan
       POSTGRES_PASSWORD: ckan
@@ -17,7 +17,7 @@ services:
   ckan-redis:
     networks:
       - default
-    image: "redis:3"
+    image: "redis:7"
 
   ckan-solr:
     networks:
@@ -25,7 +25,7 @@ services:
     image: "ckan/ckan-solr:2.9-solr9"
 
   ckan:
-    image: python:3.7-buster
+    image: python:3.8-bullseye
     networks:
       - default
 
