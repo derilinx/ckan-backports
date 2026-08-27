@@ -1,0 +1,20 @@
+name: Test
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }} # workflow limits it to this workflow, ref includes a pushed branch or on pull request merge branch
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+permissions: {}
+
+jobs:
+
+  pytest:
+    name: Test (Pytest)
+    uses: ./.github/workflows/pytest.yml # Call the reusable workflow
+    permissions:
+      contents: read
