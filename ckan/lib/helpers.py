@@ -7,6 +7,7 @@ available to Controllers. This module is available to templates as 'h'.
 '''
 import email.utils
 import datetime
+import html
 import logging
 import re
 import os
@@ -49,6 +50,8 @@ from ckan.lib.pagination import Page
 from ckan.common import _, ungettext, c, g, request, session, json
 from ckan.lib.webassets_tools import include_asset, render_assets
 from markupsafe import Markup, escape
+from textwrap import shorten
+
 
 if six.PY2:
     from pylons import url as _pylons_default_url
@@ -1434,20 +1437,10 @@ def markdown_extract(text, extract_length=190):
     will not be truncated.'''
     if not text:
         return ''
-    plain = bleach_clean(markdown(text), strip=True)
+    plain = html.unescape(bleach_clean(markdown(text), tags=(), strip=True))
     if not extract_length or len(plain) < extract_length:
-        return literal(plain)
-
-    return literal(
-        text_type(
-            truncate(
-                plain,
-                length=extract_length,
-                indicator='...',
-                whole_word=True
-            )
-        )
-    )
+        return plain
+    return shorten(plain, width=extract_length, placeholder='...')
 
 
 @core_helper
