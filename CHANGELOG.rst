@@ -10,6 +10,24 @@ Changelog
 .. towncrier release notes start
 
 ===========================
+v.2.9.15 (2026-08-27)
+===========================
+
+Bug fixes
+---------
+
+
+- `GHSA-8frv-ccr7-4m2p (CVE pending) <https://github.com/ckan/ckan/security/advisories/GHSA-8frv-ccr7-4m2p>`_: Stored XSS via resource fields in Text view
+- `GHSA-5r6j-4c43-7mx6 (CVE pending) <https://github.com/ckan/ckan/security/advisories/GHSA-5r6j-4c43-7mx6>`_: Unauthenticated nested Solr QParser allowlist bypass in ``package_search``
+- `GHSA-73fv-x47v-f4j5 (CVE pending) <https://github.com/ckan/ckan/security/advisories/GHSA-73fv-x47v-f4j5>`_: Authenticated stacked SQL injection in ``datastore_create``
+- `GHSA-8hw7-23gj-5599 (CVE pending) <https://github.com/ckan/ckan/security/advisories/GHSA-8hw7-23gj-5599>`_: datastore_search_sql Authorization Bypass
+- `GHSA-3g5q-3wf6-p8rc (CVE pending) <https://github.com/ckan/ckan/security/advisories/GHSA-3g5q-3wf6-p8rc>`_: ``markdown_extract()`` Stored XSS on Dataset Listings
+- `GHSA-jgwg-vp4m-5xw5 (CVE pending) <https://github.com/ckan/ckan/security/advisories/GHSA-jgwg-vp4m-5xw5>`_: Exposure of private metadata via follow API actions
+- `CVE-2026-42031  <https://github.com/ckan/ckan/security/advisories/GHSA-h7j7-3rx6-xvcg>`_: Fix sql injection through select parameter of ts_rewrite
+
+
+
+===========================
 v.2.9.14 (2025-10-30)
 ===========================
 
