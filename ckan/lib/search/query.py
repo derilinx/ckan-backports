@@ -32,6 +32,15 @@ QUERY_FIELDS = "name^4 title^4 tags^2 groups^2 text"
 
 solr_regex = re.compile(r'([\\+\-&|!(){}\[\]^"~*?:])')
 
+# Matches Solr magic fields _query_ and _val_
+MAGIC_FIELD_RE = re.compile(
+    r'\s*(?<![\w\\])\\?_(?:\\?q\\?u\\?e\\?r\\?y|\\?v\\?a\\?l)\\?_\s*:'
+)
+
+# Matches local params and query parser definitons starting with {!
+QUERY_PARSER_RE = re.compile(r'(?:^|[^\\])(?:\\\\)*\{!')
+
+
 def escape_legacy_argument(val):
     # escape special chars \+-&|!(){}[]^"~*?:
     return solr_regex.sub(r'\\\1', val)
@@ -401,9 +410,25 @@ class PackageSearchQuery(SearchQuery):
         query.setdefault("q.op", "AND")
 
         def _check_query_parser(param, value):
-            allowed_qp = aslist(config.get("ckan.search.solr_allowed_query_parsers", []))
-            if isinstance(value, str) and value.strip().startswith("{!"):
-                if not _get_local_query_parser(value) in allowed_qp:
+            if not isinstance(value, str):
+                return
+
+            value = value.strip()
+
+            if re.search(MAGIC_FIELD_RE, value):
+               raise SearchError(f"Magic fields are not supported in param '{param}'.")
+
+            match = QUERY_PARSER_RE.findall(value)
+
+            if match:
+                if len(match) > 1:
+                       raise SearchError(f"Query parsers are not supported in param '{param}'.")
+
+                if not value.startswith("{!"):
+                   raise SearchError(f"Local parameters must be defined at the beginning of param '{param}'.")
+
+                allowed_query_parsers = aslist(config.get("ckan.search.solr_allowed_query_parsers"))
+                if not _get_local_query_parser(value) in allowed_query_parsers:
                    raise SearchError(f"Local parameters are not supported in param '{param}'.")
 
         for param in query.keys():
@@ -428,7 +453,7 @@ class PackageSearchQuery(SearchQuery):
                         'Unknown sort order' in e.args[0]:
                     raise SearchQueryError('Invalid "sort" parameter')
 
-                if ("Failed to connect to server" in e.args[0] or 
+                if ("Failed to connect to server" in e.args[0] or
                         "Connection to server" in e.args[0]):
                     log.warning("Connection Error: Failed to connect to Solr server.")
                     raise SolrConnectionError("Solr returned an error while searching.")
