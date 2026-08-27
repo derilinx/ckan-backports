@@ -1355,15 +1355,14 @@ def follow_user(context, data_dict):
     :rtype: dictionary
 
     '''
-    if 'user' not in context:
-        raise NotAuthorized(_("You must be logged in to follow users"))
+    _check_access('follow_user', context, data_dict)
 
     model = context['model']
     session = context['session']
 
     userobj = model.User.get(context['user'])
     if not userobj:
-        raise NotAuthorized(_("You must be logged in to follow users"))
+        raise NotFound(_("User not found"))
 
     schema = (context.get('schema')
               or ckan.logic.schema.default_follow_user_schema())
@@ -1413,20 +1412,16 @@ def follow_dataset(context, data_dict):
 
     '''
 
-    if 'user' not in context:
-        raise NotAuthorized(
-            _("You must be logged in to follow a dataset."))
+    _check_access('follow_dataset', context, data_dict)
 
     model = context['model']
-    session = context['session']
+
+    schema = context.get(
+        'schema') or ckan.logic.schema.default_follow_dataset_schema()
 
     userobj = model.User.get(context['user'])
     if not userobj:
-        raise NotAuthorized(
-            _("You must be logged in to follow a dataset."))
-
-    schema = (context.get('schema')
-              or ckan.logic.schema.default_follow_dataset_schema())
+        raise NotFound(_("User not found"))
 
     validated_data_dict, errors = _validate(data_dict, schema, context)
 
@@ -1554,20 +1549,16 @@ def follow_group(context, data_dict):
     :rtype: dictionary
 
     '''
-    if 'user' not in context:
-        raise NotAuthorized(
-            _("You must be logged in to follow a group."))
+    _check_access('follow_group', context, data_dict)
 
     model = context['model']
-    session = context['session']
-
-    userobj = model.User.get(context['user'])
-    if not userobj:
-        raise NotAuthorized(
-            _("You must be logged in to follow a group."))
 
     schema = context.get('schema',
                          ckan.logic.schema.default_follow_group_schema())
+
+    userobj = model.User.get(context['user'])
+    if not userobj:
+        raise NotFound(_("User not found"))
 
     validated_data_dict, errors = _validate(data_dict, schema, context)
 

@@ -801,7 +801,6 @@ def _import_module_functions(module_path):
     for part in module_path.split('.')[1:]:
         module = getattr(module, part)
     for k, v in module.__dict__.items():
-
         try:
             if v.__module__ != module_path:
                 continue
@@ -809,3 +808,17 @@ def _import_module_functions(module_path):
         except AttributeError:
             pass
     return functions_dict
+
+
+def fresh_context(context, **kwargs):
+    """ Copy just the minimum fields into a new context
+        for cases in which we reuse the context and
+        we want a clean version with minimum fields """
+    new_context = {
+        k: context[k] for k in (
+            'model', 'session', 'user', 'auth_user_obj',
+            'ignore_auth', 'defer_commit',
+        ) if k in context
+    }
+    new_context.update(kwargs)
+    return new_context

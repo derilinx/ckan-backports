@@ -182,3 +182,45 @@ def api_token_revoke(context, data_dict):
     if token is None or token.owner.name != context[u'user']:
         return {u'success': False}
     return {u'success': True}
+
+
+def _check_unfollow_auth(context) -> bool:
+    if not context.get('user'):
+        return False
+
+    model = context["model"]
+    userobj = model.User.get(context['user'])
+    if not userobj:
+        return False
+
+    return True
+
+
+def unfollow_group(context, data_dict):
+    """
+    Only logged in users can unfollow a group.
+    """
+    if _check_unfollow_auth(context):
+        return {'success': True}
+    return {'success': False,
+            'msg': _("You must be logged in to unfollow groups")}
+
+
+def unfollow_dataset(context, data_dict):
+    """
+    Only logged in users can unfollow a dataset.
+    """
+    if _check_unfollow_auth(context):
+        return {'success': True}
+    return {'success': False,
+            'msg': _("You must be logged in to unfollow datasets")}
+
+
+def unfollow_user(context, data_dict):
+    """
+    Only logged in users can unfollow a dataset.
+    """
+    if _check_unfollow_auth(context):
+        return {'success': True}
+    return {'success': False,
+            'msg': _("You must be logged in to unfollow users")}

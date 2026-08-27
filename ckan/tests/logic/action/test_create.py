@@ -1255,10 +1255,49 @@ class TestFollowDataset(object):
     def test_no_activity(self, app):
 
         user = factories.User()
-        dataset = factories.Dataset(user=user)
-        _clear_activities()
-        helpers.call_action(
-            "follow_dataset", context={"user": user["name"]}, **dataset
+        dataset = factories.Dataset()
+        context = {"user": "", "ignore_auth": False}
+        with pytest.raises(logic.NotAuthorized):
+            helpers.call_action("follow_dataset", context, id=dataset["id"])
+        context = {"user": user["name"], "ignore_auth": False}
+        helpers.call_action("follow_dataset", context, id=dataset["id"])
+
+    def test_cannot_follow_private_dataset_without_read_access(self):
+        owner = factories.User()
+        org = factories.Organization(user=owner)
+        dataset = factories.Dataset(
+            user=owner, owner_org=org["id"], private=True
+        )
+        user = factories.User()
+
+        context = {"user": user["name"], "ignore_auth": False}
+        with pytest.raises(logic.NotAuthorized):
+            helpers.call_action("follow_dataset", context, id=dataset["id"])
+
+    def test_can_follow_private_dataset_with_read_access(self):
+        owner = factories.User()
+        org = factories.Organization(user=owner)
+        dataset = factories.Dataset(
+            user=owner, owner_org=org["id"], private=True
+        )
+
+        context = {"user": owner["name"], "ignore_auth": False}
+        helpers.call_action("follow_dataset", context, id=dataset["id"])
+
+    def test_follow_dataset(self):
+        user = factories.User()
+        dataset = factories.Dataset()
+        context = {"user": user["name"]}
+        assert (
+            helpers.call_action("dataset_follower_count", id=dataset["id"])
+            == 0
+        )
+        assert (
+            helpers.call_action("dataset_follower_list", id=dataset["id"])
+            == []
+        )
+        assert not helpers.call_action(
+            "am_following_dataset", context, id=dataset["id"]
         )
 
         activities = helpers.call_action("user_activity_list", id=user["id"])

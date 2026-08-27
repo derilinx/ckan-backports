@@ -11,6 +11,7 @@ etc.
 
 import ast
 import io
+import importlib
 import os
 import os.path
 import re
@@ -178,6 +179,119 @@ def renumerate(it):
     ``it`` must support ``len``.
     """
     return zip(xrange(len(it) - 1, -1, -1), reversed(it))
+
+
+class TestActionAuth(object):
+    """These tests check the logic auth/action functions are compliant. The
+    main tests are that each action has a corresponding auth function and
+    that each auth function has an action.  We check the function only
+    accepts (context, data_dict) as parameters."""
+
+    ACTION_NO_AUTH_BLACKLIST = [
+        "get: roles_show",
+        "update: task_status_update_many",
+        "update: term_translation_update_many",
+    ]
+
+    AUTH_NO_ACTION_BLACKLIST = [
+        "create: file_upload",
+        "delete: revision_delete",
+        "delete: revision_undelete",
+        "get: group_list_available",
+        "get: sysadmin",
+        "get: request_reset",
+        "get: user_reset",
+        "update: group_change_state",
+        "update: group_edit_permissions",
+        "update: package_change_state",
+        "update: revision_change_state",
+    ]
+
+    ACTION_NO_DOC_STR_BLACKLIST = ["get: get_site_user"]
+
+    @pytest.fixture(scope="class")
+    def results(self):
+        def get_functions(module_root):
+            import ckan.authz as authz
+
+            fns = {}
+            for auth_module_name in [
+                "get",
+                "create",
+                "update",
+                "delete",
+                "patch",
+            ]:
+                module_path = "%s.%s" % (module_root, auth_module_name)
+                module = importlib.import_module(module_path)
+                members = authz.get_local_functions(module)
+                for key, v in members:
+                    name = "%s: %s" % (auth_module_name, key)
+                    fns[name] = v
+            return fns
+
+        actions = get_functions("logic.action")
+        auths = get_functions("logic.auth")
+        return actions, auths
+
+    def test_actions_have_auth_fn(self, results):
+        actions_no_auth = set(results[0].keys()) - set(results[1].keys())
+        actions_no_auth -= set(self.ACTION_NO_AUTH_BLACKLIST)
+        assert (
+            not actions_no_auth
+        ), "These actions have no auth function\n%s" % "\n".join(
+            sorted(list(actions_no_auth))
+        )
+
+    def test_actions_have_auth_fn_blacklist(self, results):
+        actions_no_auth = set(results[0].keys()) & set(results[1].keys())
+        actions_no_auth &= set(self.ACTION_NO_AUTH_BLACKLIST)
+        assert (
+            not actions_no_auth
+        ), "These actions blacklisted but " + "shouldn't be \n%s" % "\n".join(
+            sorted(list(actions_no_auth))
+        )
+
+    def test_auths_have_action_fn(self, results):
+        auths_no_action = set(results[1].keys()) - set(results[0].keys())
+        auths_no_action -= set(self.AUTH_NO_ACTION_BLACKLIST)
+        assert (
+            not auths_no_action
+        ), "These auth functions have no action\n%s" % "\n".join(
+            sorted(list(auths_no_action))
+        )
+
+    def test_auths_have_action_fn_blacklist(self, results):
+        auths_no_action = set(results[1].keys()) & set(results[0].keys())
+        auths_no_action &= set(self.AUTH_NO_ACTION_BLACKLIST)
+        assert not auths_no_action, (
+            "These auths functions blacklisted but"
+            + " shouldn't be \n%s" % "\n".join(sorted(list(auths_no_action)))
+        )
+
+    def test_fn_signatures(self, results):
+        errors = []
+        for name, fn in six.iteritems(results[0]):
+            params = inspect.signature(fn).parameters
+            if list(params) != ["context", "data_dict"]:
+                errors.append(name)
+        assert not errors, (
+            "These action functions have the wrong function"
+            + " signature, should be (context, data_dict)\n%s"
+            % "\n".join(sorted(errors))
+        )
+
+    def test_fn_docstrings(self, results):
+        errors = []
+        for name, fn in six.iteritems(results[0]):
+            if not getattr(fn, "__doc__", None):
+                if name not in self.ACTION_NO_DOC_STR_BLACKLIST:
+                    errors.append(name)
+        assert (
+            not errors
+        ), "These action functions need docstrings\n%s" % "\n".join(
+            sorted(errors)
+        )
 
 
 def find_unprefixed_string_literals(filename):

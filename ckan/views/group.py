@@ -624,6 +624,9 @@ def follow(id, group_type, is_organization):
         h.flash_error(error_message)
     except NotAuthorized as e:
         h.flash_error(e.message)
+    except NotFound:
+        return base.abort(404, _(u'Group not found'))
+
     return h.redirect_to(u'group.read', id=id)
 
 

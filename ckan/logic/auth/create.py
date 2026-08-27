@@ -280,3 +280,48 @@ def package_collaborator_create(context, data_dict):
             'msg': _('User %s not authorized to add collaborators to this dataset') % user}
 
     return {'success': True}
+
+
+def _check_follow_auth(context) -> bool:
+    if not context.get('user'):
+        return False
+
+    model = context["model"]
+    userobj = model.User.get(context['user'])
+    if not userobj:
+        return False
+
+    return True
+
+
+def follow_group(context, data_dict):
+    """
+    Only logged in users who can read a group can follow it.
+    """
+    if not _check_follow_auth(context):
+        return {'success': False,
+                'msg': _("You must be logged in to follow groups")}
+
+    return authz.is_authorized('group_show', context, data_dict)
+
+
+def follow_dataset(context, data_dict):
+    """
+    Only logged in users who can read a dataset can follow it.
+    """
+    if not _check_follow_auth(context):
+        return {'success': False,
+                'msg': _("You must be logged in to follow datasets")}
+
+    return authz.is_authorized('package_show', context, data_dict)
+
+
+def follow_user(context, data_dict):
+    """
+    Only logged in users can follow a user.
+    """
+    if not _check_follow_auth(context):
+        return {'success': False,
+                'msg': _("You must be logged in to follow users")}
+
+    return authz.is_authorized('user_show', context, data_dict)

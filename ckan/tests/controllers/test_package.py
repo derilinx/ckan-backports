@@ -1814,7 +1814,7 @@ class TestPackageFollow(object):
 
         env = {"REMOTE_USER": six.ensure_str(user_one["name"])}
         follow_url = url_for("dataset.follow", id="not-here")
-        response = app.post(follow_url, extra_environ=env)
+        response = app.post(follow_url, extra_environ=env, status=404)
 
         assert "Dataset not found" in response
 
